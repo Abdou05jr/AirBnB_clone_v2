@@ -1,37 +1,47 @@
 #!/usr/bin/python3
-"""This module defines a class User"""
+""" holds class User"""
+import hashlib
+import models
 from models.base_model import BaseModel, Base
-
-# SQLAlchemy modules
-from sqlalchemy import Column
-from sqlalchemy import String
+from os import getenv
 from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String
 
 
 class User(BaseModel, Base):
-    """
-    Defines a class User
+    """Representation of a user """
+    if getenv('HBNB_TYPE_STORAGE') == 'db':
+        __tablename__ = 'users'
+        email = Column(String(128),
+                       nullable=False)
+        _password = Column('password',
+                           String(128),
+                           nullable=False)
+        first_name = Column(String(128),
+                            nullable=True)
+        last_name = Column(String(128),
+                           nullable=True)
+        places = relationship("Place",
+                              backref="user",
+                              cascade="all, delete-orphan")
+        reviews = relationship("Review",
+                               backref="user",
+                               cascade="all, delete-orphan")
+    else:
+        email = ""
+        _password = ""
+        first_name = ""
+        last_name = ""
 
-    Attributes:
-        __tablename__ (str): Users MySQL table name
+    def __init__(self, *args, **kwargs):
+        """initializes user"""
+        super().__init__(*args, **kwargs)
 
-        email (String): User's email address column
-        password (String): User's password column
-        first_name (String): User's first name column
-        last_name (String): User's last name column
-    """
-    __tablename__ = 'users'
+    @property
+    def password(self):
+        return self._password
 
-    email = Column(String(128), nullable=False)
-    password = Column(String(128), nullable=False)
-    first_name = Column(String(128))
-    last_name = Column(String(128))
-
-    places = relationship('Place',
-                          backref='user',
-                          cascade='all, delete-orphan',
-                          passive_deletes=True)
-    reviews = relationship('Review',
-                           backref='user',
-                           cascade='all, delete-orphan',
-                           passive_deletes=True)
+    @password.setter
+    def password(self, pwd):
+        """hashing password values"""
+        self._password = pwd
